@@ -180,11 +180,12 @@ function ipt_kb_scripts() {
 	wp_enqueue_style( 'ipt_kb-bootstrap-theme', get_template_directory_uri() . '/lib/bootstrap/css/bootstrap-theme.min.css', array(), $ipt_kb_version );
 
 	// Icomoon
-	wp_enqueue_style( 'ipt-icomoon-fonts', get_template_directory_uri() . '/lib/icomoon/icomoon.css', array(), $ipt_kb_version );
+	wp_enqueue_style( 'ipt-kb-icomoon', get_template_directory_uri() . '/lib/icomoon/style.css', array(), $ipt_kb_version );
+	wp_enqueue_style( 'fontawesome', get_template_directory_uri() . '/lib/fontawesome/css/font-awesome.min.css', array(), $ipt_kb_version );
 
 	// Now the JS
 	wp_enqueue_script( 'ipt_kb-bootstrap', get_template_directory_uri() . '/lib/bootstrap/js/bootstrap.min.js', array( 'jquery' ), $ipt_kb_version );
-	wp_enqueue_script( 'ipt_kb-bootstrap-jq', get_template_directory_uri() . '/lib/bootstrap/js/jquery.ipt-kb-bootstrap.js', array( 'jquery' ), $ipt_kb_version );
+	wp_enqueue_script( 'ipt_kb-bootstrap-jq', get_template_directory_uri() . '/js/jquery.ipt-kb-bootstrap.js', array( 'jquery' ), $ipt_kb_version );
 
 	wp_enqueue_script( 'ipt_kb-skip-link-focus-fix', get_template_directory_uri() . '/js/skip-link-focus-fix.js', array(), $ipt_kb_version, true );
 
@@ -302,22 +303,12 @@ function ipt_kb_required_plugins() {
 	if ( function_exists( 'tgmpa' ) ) {
 		$plugins = array();
 
-		// Base plugin
-		$plugins[] = array(
-			'name' => 'iPanelThemes Theme Options',
-			'slug' => 'ipt-theme-options',
-			'source' => get_template_directory() . '/plugins/ipt-theme-options.zip',
-			'required' => false,
-			'version' => '0.0.1',
-			'external_url' => '',
-		);
-
 		// Easy Bootstrap shortcode
 		$plugins[] = array(
-			'name' => 'Easy Bootstrap Shortcode',
-			'slug' => 'easy-bootstrap-shortcodes',
+			'name' => 'Bootstrap Shortcodes for WordPress',
+			'slug' => 'bootstrap-3-shortcodes',
 			'required' => false,
-			'version' => '4.2.3',
+			'version' => '3.3.10',
 		);
 
 		// bbPress
@@ -352,7 +343,19 @@ function ipt_kb_required_plugins() {
 			'version' => '3.1.11',
 		);
 
-		tgmpa( $plugins );
+
+		$config = array(
+			'id'           => 'ipt_kb',                 // Unique ID for hashing notices for multiple instances of TGMPA.
+			'default_path' => '',                      // Default absolute path to bundled plugins.
+			'menu'         => 'tgmpa-install-plugins', // Menu slug.
+			'has_notices'  => true,                    // Show admin notices or not.
+			'dismissable'  => true,                    // If false, a user cannot dismiss the nag message.
+			'dismiss_msg'  => '',                      // If 'dismissable' is false, this message will be output at top of nag.
+			'is_automatic' => false,                   // Automatically activate plugins after installation or not.
+			'message'      => '',                      // Message to output right before the plugins table.
+		);
+
+		tgmpa( $plugins, $config );
 	}
 }
 endif;
@@ -472,6 +475,20 @@ add_filter( 'ipt_theme_op_active_theme_meta', 'ipt_kb_op_theme_meta' );
  * Include the walker class for bootstrap nav menu
  */
 require get_template_directory() . '/inc/class-ipt-bootstrap-walker-nav-menu.php';
+
+/**
+ * Plug our Walker for editing the nav menu
+ */
+require get_template_directory() . '/inc/class-ipt-bootstrap-walker-nav-menu-edit.php';
+require get_template_directory() . '/inc/ipt-kb-nav-filters.php';
+// Add custom fields to menu
+add_action( 'wp_setup_nav_menu_item', 'ipt_bootstrap_walker_nav_menu_edit_add_fields' );
+
+// Save custom fields from menu
+add_action( 'wp_update_nav_menu_item', 'ipt_bootstrap_walker_nav_menu_edit_update_fields', 10, 3 );
+
+// Change the edit menu walker
+add_filter( 'wp_edit_nav_menu_walker', 'ipt_bootstrap_walker_nav_menu_edit_filter', 20, 2 );
 /**
  * Implement the Custom Header feature.
  */
